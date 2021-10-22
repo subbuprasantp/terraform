@@ -1,7 +1,6 @@
 resource "random_id" "random_id_prefix" {
   byte_length = 2
 }
-
 data "terraform_remote_state" "sg" {
   backend = "s3"
   config = {
