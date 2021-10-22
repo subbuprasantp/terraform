@@ -62,15 +62,6 @@ module "ec2" {
   location                       = "${var.location}" 
 }
 
-module "rds" {
-  source = "./modules/rds"
-
-  rds_security_group_api_SG    = "${data.terraform_remote_state.sg.outputs.rds_security_group_api}"
-  rds_security_group_core_SG   = "${data.terraform_remote_state.sg.outputs.rds_security_group_core}"
-  db_identifier_name           = "${data.terraform_remote_state.sg.outputs.db_identifier_name}"
-  db_security_group            = module.securitygroup.db_security_group
-}
-
 module "S3" {
   source = "./modules/S3"
 
@@ -104,4 +95,10 @@ module "cognito" {
   aws_cognito_user_pool_client = "${var.cardup}${var.location}${var.environment}${var.aws_cognito_user_pool_client}" 
   cognito_identifier = "${var.cardup}${var.location}${var.environment}${var.cognito_identifier}"
   aws_cognito_user_pool_name = "${var.cardup}${var.location}${var.environment}_${var.aws_cognito_user_pool_name}"
+}
+
+resource "null_resource" "modifydb" {
+  provisioner "local-exec" {
+    command = "aws rds modify-db-instance --db-instance-identifier ${data.terraform_remote_state.sg.outputs.db_identifier_name} --vpc-security-group-ids ${data.terraform_remote_state.sg.outputs.rds_security_group_api} ${data.terraform_remote_state.sg.outputs.rds_security_group_core} ${module.securitygroup.db_security_group} --apply-immediately"
+  }
 }
